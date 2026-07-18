@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>thuc nguyen — blog</title>
+<meta name="description" content="occasional notes on backend things.">
+<style>
+  body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 72ch;
+    margin: 3rem auto;
+    padding: 0 1rem;
+    color: #111;
+    background: #fff;
+  }
+  h1, h2 { font-size: 1em; font-weight: bold; margin: 1.5em 0 0; }
+  h1:first-child { margin-top: 0; }
+  .rule { color: inherit; }
+  .post { margin: 1.5em 0; }
+  .meta { color: #555; }
+  a { color: #0000ee; }
+  hr { border: none; border-top: 1px dashed #999; margin: 2em 0; }
+  pre { background: #f4f4f4; padding: 0.8em; overflow-x: auto; }
+  code { background: #f4f4f4; padding: 0 0.2em; }
+  pre code { padding: 0; }
+  blockquote { border-left: 3px solid #999; margin: 1em 0; padding-left: 1em; color: #555; }
+  nav.pages { margin-top: 2em; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #ddd; background: #111; }
+    .meta, blockquote { color: #999; }
+    a { color: #8ab4f8; }
+    pre, code { background: #1d1d1d; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>blog</h1>
+  <div class="rule">====</div>
+  <p class="meta"><a href="../">← thucnguyen</a> · occasional notes on backend things</p>
+</header>
+
+<main id="content">
+  <p class="meta">loading…</p>
+</main>
+
+<script>
+// Add a post: drop a .md file (with `title` and `date` frontmatter) in this
+// folder and add its filename to posts.json — just the name, nothing else.
+const PER_PAGE = 2;
+const $main = document.getElementById('content');
+
+// Pull `title`/`date` out of a leading `--- ... ---` frontmatter block,
+// returning the metadata and the remaining markdown body.
+function parseFrontmatter(text) {
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  const meta = {}, body = m ? text.slice(m[0].length) : text;
+  if (m) for (const line of m[1].split('\n')) {
+    const kv = line.match(/^(\w+):\s*(.*)$/);
+    if (kv) meta[kv[1]] = kv[2].trim();
+  }
+  return { meta, body };
+}
+
+// ~50-line markdown renderer: #/##/### headings, paragraphs, - lists,
+// > quotes, ``` code fences, `code`, **bold**, *italic*, [links](url).
+function renderMd(src) {
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = s => esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\*([^*]+)\*/g, '<i>$1</i>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>');
+  let html = '', para = [], inList = false, code = null;
+  const flush = () => {
+    if (para.length) { html += '<p>' + para.map(inline).join('<br>') + '</p>'; para = []; }
+    if (inList) { html += '</ul>'; inList = false; }
+  };
+  for (const line of src.split('\n')) {
+    if (code !== null) {
+      if (line.startsWith('```')) { html += '<pre><code>' + esc(code.join('\n')) + '</code></pre>'; code = null; }
+      else code.push(line);
+      continue;
+    }
+    if (line.startsWith('```')) { flush(); code = []; continue; }
+    if (/^<!--.*-->\s*$/.test(line)) continue;
+    const h = line.match(/^(#{1,3}) +(.*)/);
+    if (h) { flush(); const n = h[1].length; html += `<h${n}>${inline(h[2])}</h${n}>`; continue; }
+    if (/^[-*] +/.test(line)) {
+      if (para.length) flush();
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li>' + inline(line.replace(/^[-*] +/, '')) + '</li>';
+      continue;
+    }
+    if (line.startsWith('> ')) { flush(); html += '<blockquote>' + inline(line.slice(2)) + '</blockquote>'; continue; }
+    if (line.trim() === '') { flush(); continue; }
+    // continuation of a list item wrapped to the next line
+    if (inList && /^ {2,}/.test(line)) { html = html.replace(/<\/li>$/, ' ' + inline(line.trim()) + '</li>'); continue; }
+    para.push(line);
+  }
+  flush();
+  if (code) html += '<pre><code>' + esc(code.join('\n')) + '</code></pre>';
+  return html;
+}
+
+function showList(posts, page) {
+  if (posts.length === 0) { $main.innerHTML = '<p class="meta">no posts yet.</p>'; return; }
+  const pages = Math.max(1, Math.ceil(posts.length / PER_PAGE));
+  page = Math.min(Math.max(1, page), pages);
+  const slice = posts.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  let html = slice.map(p =>
+    `<div class="post"><a href="?post=${encodeURIComponent(p.file.replace(/\.md$/, ''))}">${p.title}</a><br>` +
+    `<span class="meta">${p.date}</span></div>`
+  ).join('');
+  // numbered pagination, shown 10 page links at a time ("…" jumps a window)
+  const WINDOW = 10;
+  const winStart = Math.floor((page - 1) / WINDOW) * WINDOW + 1;
+  const winEnd = Math.min(winStart + WINDOW - 1, pages);
+  let nums = '';
+  if (winStart > 1) nums += `<a href="?page=${winStart - 1}">…</a> `;
+  for (let n = winStart; n <= winEnd; n++)
+    nums += n === page ? `[${n}] ` : `<a href="?page=${n}">${n}</a> `;
+  if (winEnd < pages) nums += `<a href="?page=${winEnd + 1}">…</a> `;
+  html += '<hr><nav class="pages meta">';
+  html += page > 1 ? `<a href="?page=${page - 1}">← newer</a>` : '← newer';
+  html += ` · ${nums.trim()} · `;
+  html += page < pages ? `<a href="?page=${page + 1}">older →</a>` : 'older →';
+  html += '</nav>';
+  $main.innerHTML = html;
+}
+
+function showPost(posts, slug) {
+  const post = posts.find(p => p.file.replace(/\.md$/, '') === slug);
+  if (!post) { $main.innerHTML = '<p>404: no such post. <a href="./">← back to list</a></p>'; return; }
+  document.title = 'thuc nguyen — ' + post.title;
+  $main.innerHTML =
+    `<h1>${post.title}</h1><div class="rule">${'='.repeat(post.title.length)}</div>` +
+    `<p class="meta">${post.date}</p>` + renderMd(post.body) +
+    '<hr><p class="meta"><a href="./">← back to list</a></p>';
+}
+
+const params = new URLSearchParams(location.search);
+// posts.json is just a list of filenames; title/date come from each file's frontmatter.
+fetch('posts.json')
+  .then(r => r.json())
+  .then(files => Promise.all(files.map(file =>
+    fetch(file)
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(text => {
+        const { meta, body } = parseFrontmatter(text);
+        return { file, title: meta.title || file.replace(/\.md$/, ''), date: meta.date || '', body };
+      })
+  )))
+  .then(posts => {
+    // newest first
+    posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    const slug = params.get('post');
+    if (slug) showPost(posts, slug);
+    else showList(posts, parseInt(params.get('page') || '1', 10) || 1);
+  })
+  .catch(() => { $main.innerHTML = '<p>failed to load posts.</p>'; });
+</script>
+
+</body>
+</html>

@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
 <title>thuc nguyen — projects</title>
 <meta name="description" content="backend engineer. current projects.">
 <style>
@@ -18,6 +20,7 @@
   }
   h1, h2 { font-size: 1em; font-weight: bold; margin: 0; }
   .rule { color: inherit; }
+  .projects { list-style: none; margin: 0; padding: 0; }
   .project { margin: 1.5em 0; }
   .meta { color: #555; }
   a { color: #0000ee; }
@@ -34,7 +37,7 @@
 <header>
   <h1>thuc nguyen</h1>
   <div class="rule">===========</div>
-  <p>backend engineer. i write servers, not css.</p>
+  <p>founder. pinterst engineer. ucsd. always room for servers.</p>
 </header>
 
 <main>
@@ -44,34 +47,37 @@
   <!-- PLACEHOLDER: replace the projects below with your real ones.
        Copy/paste a .project block to add more. -->
 
-  <div class="project">
-    [1] <a href="#">queue-thing</a> — distributed job queue in Go<br>
+  <ul class="projects">
+  <li class="project">
+    <a href="#">queue-thing</a> — distributed job queue in Go<br>
     <span class="meta">status: active · go, postgres, nats</span>
-  </div>
+  </li>
 
-  <div class="project">
-    [2] <a href="#">pg-migrate</a> — zero-downtime postgres migration tool<br>
+  <li class="project">
+    <a href="#">pg-migrate</a> — zero-downtime postgres migration tool<br>
     <span class="meta">status: maintained · go, postgres</span>
-  </div>
+  </li>
 
-  <div class="project">
-    [3] <a href="#">logtail-rs</a> — structured log tailer with jq-style filters<br>
+  <li class="project">
+    <a href="#">logtail-rs</a> — structured log tailer with jq-style filters<br>
     <span class="meta">status: active · rust</span>
-  </div>
+  </li>
 
-  <div class="project">
-    [4] <a href="#">homepage</a> — this page. one html file, no framework<br>
+  <li class="project">
+    <a href="projects/?project=homepage">homepage</a> — this page. one html file, no framework<br>
     <span class="meta">status: done · html, 30 lines of css</span>
-  </div>
+  </li>
+  </ul>
+
 </main>
 
 <hr>
 
 <footer>
-  <!-- PLACEHOLDER: set your github and resume links -->
-  <a href="https://github.com/YOUR_USERNAME">github</a> ·
-  <a href="mailto:thucnguyen1952000@gmail.com">email</a> ·
-  <a href="#">resume</a>
+  <a href="https://github.com/thucngyyen">github</a> ·
+  <a href="blog/">blog</a> ·
+  <a href="mailto:thucngyyen@gmail.com">email</a> |
+  <a href="https://buymeacoffee.com/thucnguyen">buymeacoffee</a>
 </footer>
 
 </body>
